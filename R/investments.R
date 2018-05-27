@@ -1,73 +1,79 @@
-simulate_portfolios = function(contributions, 
-                             n_months, 
-                             n_simulations = 100){
+simulate_portfolios = function(con, 
+                               pct_bond = 0.2,
+                               n_sims = 100,
+                               init_f01k = 0,
+                               init_ira = 0,
+                               init_taxable = 0){
+  .sim = function(id){
+    
+    stock = function(x) (1 - pct_bond) * x
+    bond = function(x) pct_bond * x
+    
+    prices = sample_prices(n_months)
+    
+    # initial portfolio shares
+    
+    init_f01k_stock = stock(init_f01k) / prices$stock_price[1]
+    init_ira_stock = stock(init_ira) / prices$stock_price[1]
+    init_taxable_stock = stock(init_taxable) / prices$stock_price[1]
+    
+    init_f01k_bond = bond(init_f01k) / prices$bond_price
+    init_ira_bond = bond(init_ira) / prices$bond_price[1]
+    init_taxable_bond = bond(init_taxable) / prices$bond_price[1]
+    
+    # simulate preformance
+    
+    res = mcon %>%
+      bind_cols(prices) %>%
+      mutate_at(vars(ends_with("mcon")), funs(stock, bond)) %>%
+      mutate(f01k_stock_bought = f01k_mcon_stock / stock_price,
+             ira_stock_bought = ira_mcon_stock / stock_price,
+             taxable_stock_bought = taxable_mcon_stock / stock_price,
+             f01k_bond_bought = f01k_mcon_bond / bond_price,
+             ira_bond_bought = ira_mcon_bond / bond_price,
+             taxable_bond_bought = taxable_mcon_bond / bond_price) %>%
+      mutate(f01k_stock_total = cumsum(f01k_stock_bought) + init_f01k_stock,
+             ira_stock_total = cumsum(ira_stock_bought) + init_ira_stock,
+             taxable_stock_total = cumsum(taxable_stock_bought) + init_taxable_stock,
+             f01k_bond_total = cumsum(f01k_bond_bought) + init_f01k_bond,
+             ira_bond_total = cumsum(ira_bond_bought) + init_ira_bond,
+             taxable_bond_total = cumsum(taxable_bond_bought), init_taxable_bond) %>%
+      mutate(f01k_stock_value = f01k_stock_total * stock_price,
+             ira_stock_value = ira_stock_total * stock_price,
+             taxable_stock_value = taxable_stock_total * stock_price,
+             f01k_bond_value = f01k_bond_total * bond_price,
+             ira_bond_value = ira_bond_total * bond_price,
+             taxable_bond_value = taxable_bond_total * bond_price) %>%
+      mutate(total_value = f01k_stock_value + ira_stock_value + 
+               taxable_stock_value + f01k_bond_value + ira_bond_value +
+               taxable_bond_value) %>%
+      mutate(id = id) %>%
+      select(id, month, ends_with("value"))
+             
+  } 
   
-  sp500 = readRDS("data/sp500.Rds") %>%
-    as.tbl()
+  loginfo("Converting to monthly contributions")
   
-  starts = sp500() %>%
-    filter(date < max(date) - months(n_months)) %>%
-    sample_n(n_sim) %>%
-    select(simulation_start = date) %>%
-    mutate(simulation_id = row_number())
-
-  f01k = .run_simulations(starts, contributions$f01k_total_contribution) %>%
-    select(simulation_id, month, f01k_value = total_value)
+  mcon = convert_to_monthly(con)
+  n_months = nrow(mcon)
   
-  ira = .run_simulations(starts, contributions$ira_contribution) %>%
-    select(simulation_id, month, ira_value = total_value)
+  loginfo("Entering similuation loop")
   
-  taxable = .run_simulations(starts, contributions$taxable_contributions) %>%
-    select(simulation_id, month, taxable_value = total_value)
-
-  investments = inner_join(f01k, ira, by = c("simulation_id", "month")) %>%
-    inner_join(taxable, by = c("simulation_id", "month")) %>%
-    mutate(total = f01k_value + ira_value + taxable_value)
+  sims = map(1:n_sims, .sim) %>%
+    bind_rows()
 }
 
-.run_simulations = function(starts, yearly_contributions){
-  monthly_contributions = rep(yearly_contributions / 12, each = 12)
+convert_to_monthly = function(con){
   
-  starts %>%
-    mutate(data = map(simulation_start, 
-                      .run_simulation,
-                      monthly_contributions)) %>%
+  convert = function(x) rep(x/12, 12)
+  
+  mcon = con %>%
+    mutate(f01k_mcon = map(f01k_total_contribution, convert)) %>%
+    mutate(ira_mcon = map(ira_contribution, convert)) %>%
+    mutate(taxable_mcon = map(taxable_contribution, convert)) %>%
+    mutate(month = map(year, function(y) (y-1)*12 + 1:12)) %>%
+    select(month, ends_with("mcon")) %>%
     unnest()
 }
 
-.run_simulation = function(start, monthly_contributions){
-  
-  n_months = length(monthly_contributions)
-  
-  end = start + months(n_months)
-  
-  eq1 = sp500() %>%
-    filter(date >= start, date < end) %>%
-    arrange(date) %>%
-    mutate(month = row_number()) %>%
-    select(-date)
-  
-  eq2 = eq1 %>%
-    mutate(contribution = monthly_contributions) %>%
-    mutate(shares_from_contribution = contribution / price) %>%
-    mutate(shares_from_dividend = NA, total_shares = NA)
-  
-  for(i in seq(1, n_months)){
-    if(i == 1){
-      eq2$shares_from_dividend[i] = 0
-      eq2$total_shares[i] = eq2$shares_from_contribution[i]
-    } else{
-      
-      eq2$shares_from_dividend[i] = eq2$dividend[i] * eq2$total_shares[i-1]
-      
-      eq2$total_shares[i] = eq2$total_shares[i-1] + 
-        eq2$shares_from_dividend[i] + 
-        eq2$shares_from_contribution[i]
-    }
-  }
 
-  eq3 = eq2 %>%
-    mutate(total_value = total_shares * price)
-  
-  eq3
-}

@@ -1,27 +1,53 @@
-.sp500 = function(){
+prepare_sample_prices = function(){
+
+  bonds_path = if(file.exists("./data/VBMFX.csv")) "./data/VBMFX.csv" else
+    "../data/VBMFX.csv"
   
-  sp500_eq = Quandl::Quandl("MULTPL/SP500_REAL_PRICE_MONTH") %>%
-    rename(date = Date, price = Value) %>%
-    mutate(year = year(date), month = month(date)) %>%
-    select(-date)
+  stocks_path = if(file.exists("./data/VFINX.csv")) "./data/VFINX.csv" else
+    "../data/VFINX.csv"
   
-  sp500_div = Quandl::Quandl("MULTPL/SP500_DIV_YIELD_MONTH") %>%
-    rename(date = Date, dividend = Value) %>%
-    mutate(dividend = dividend / (12*100)) %>% # convert to monthly dividend
-    mutate(year = year(date), month = month(date)) %>%
-    select(-date)
+  bonds = read_csv(bonds_path, 
+                col_types = cols(
+                  Date = col_date(format = ""),
+                  Open = col_double(),
+                  High = col_double(),
+                  Low = col_double(),
+                  Close = col_double(),
+                  `Adj Close` = col_double(),
+                  Volume = col_integer()
+                )) %>%
+    select(date = Date, bond_price = `Adj Close`)
   
-  sp500 = inner_join(sp500_eq, sp500_div, by = c("year", "month")) %>%
-    mutate(date = glue::glue("{year}-{month}-01")) %>%
-    mutate(date = ymd(date)) %>%
-    select(date, price, dividend) %>%
-    as.tbl()
+  stocks = read_csv(stocks_path, 
+                    col_types = cols(
+                      Date = col_date(format = ""),
+                      Open = col_double(),
+                      High = col_double(),
+                      Low = col_double(),
+                      Close = col_double(),
+                      `Adj Close` = col_double(),
+                      Volume = col_integer()
+                    )) %>%
+    select(date = Date, stock_price = `Adj Close`)
+  
+  prices = inner_join(bonds, stocks, by = "date")
+  
+  sampler = function(n_months){
+    
+    n = nrow(prices)
+    m = n - n_months
+    
+    if(m < 1)
+      stop("can't sample that many months")
+    
+    i = base::sample.int(m, 1)
+    
+    prices %>%
+      filter(row_number() >= i, row_number() < (i+n_months)) %>%
+      select(contains("price"))
+  }
+
+  sampler
 }
 
-sp500 = function(path = "data/sp500.Rds"){
-  if(file.exists(path)){
-    readRDS(path)
-  } else{
-    .sp500() %T>% saveRDS(path)
-  }
-}
+sample_prices = prepare_sample_prices()

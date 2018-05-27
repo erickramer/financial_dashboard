@@ -1,3 +1,45 @@
+taxes = function(df, standard_deduction = T, other_deductions = 0){
+  
+  deductions = if(standard_deduction) 12000 + other_deductions else
+    other_deductions
+  
+  taxes = df %>%
+    mutate(income = page_income + eric_income) %>%
+    mutate(taxable_income = income - f01k_contribution - ira_contribution -
+             deductions) %>%
+    mutate(federal_tax = map_dbl(taxable_income, federal_taxes)) %>%
+    mutate(state_tax = map_dbl(taxable_income, state_taxes)) %>%
+    mutate(ss_tax = map_dbl(taxable_income, ss_taxes)) %>%
+    mutate(medicare_tax = map_dbl(taxable_income, medicare_taxes)) %>%
+    mutate(total_tax = federal_tax + state_tax + ss_tax + medicare_tax) %>%
+    mutate(net_income = income - total_tax) %>%
+    mutate(effective_tax_rate = 1 - net_income / income)
+  
+  taxes
+}
+
+contributions = function(income_after_taxes){
+  income_after_taxes %>%
+    mutate(saving_goal = income / 2) %>%
+    mutate(f01k_match = min(income*f01k_match_pct, f01k_contribution)) %>%
+    mutate(f01k_total_contribution = f01k_match + f01k_contribution) %>%
+    mutate(taxable_contribution = saving_goal - f01k_contribution - 
+             f01k_match - ira_contribution) %>%
+    mutate(net_income_after_contributions = net_income - 
+             f01k_contribution - 
+             ira_contribution - 
+             taxable_contribution) %>%
+    select(year,
+           income, 
+           total_tax,
+           net_income, 
+           f01k_contribution, 
+           f01k_total_contribution, 
+           ira_contribution,
+           taxable_contribution,
+           net_income_after_contributions)
+}
+
 .recursive_tax = function(income, brackets, rates, tax = 0){
   if(brackets[1] != 0 || length(brackets) != length(rates))
     stop("These brackets or rates ain't right")
