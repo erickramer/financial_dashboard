@@ -20,7 +20,7 @@ taxes = function(df, standard_deduction = T, other_deductions = 0){
 
 contributions = function(income_after_taxes){
   income_after_taxes %>%
-    mutate(saving_goal = income / 2) %>%
+    mutate(saving_goal = income * savings_rate) %>%
     mutate(f01k_match = min(income*f01k_match_pct, f01k_contribution)) %>%
     mutate(f01k_total_contribution = f01k_match + f01k_contribution) %>%
     mutate(taxable_contribution = saving_goal - f01k_contribution - 

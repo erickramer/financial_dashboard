@@ -124,7 +124,42 @@ editTable <- function(DF, outdir=getwd(), outfilename="table"){
     })
     
     observeEvent(input$preset_ds, {
-      df = data.frame(year = 1:10,
+      df = data.frame(year = 1:12,
+                      page_income = c(1.3e5,
+                                      1.35e5,
+                                      1.4e5,
+                                      1.45e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5),
+                      eric_income = c(1.3e5,
+                                      1.35e5,
+                                      1.4e5,
+                                      1.45e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5,
+                                      1.6e5),
+                      f01k_contribution = rep(36000, 12),
+                      f01k_match_pct = rep(0.03, 12),
+                      ira_contribution = rep(11000, 12),
+                      savings_rate = rep(0.5, 12))
+      
+      values[["DF"]] = df
+      
+    })
+    
+    observeEvent(input$preset_res, {
+      df = data.frame(year = 1:12,
                       page_income = c(1.25e5,
                                       1.3e5,
                                       1.35e5,
@@ -134,21 +169,25 @@ editTable <- function(DF, outdir=getwd(), outfilename="table"){
                                       1.6e5,
                                       1.6e5,
                                       1.6e5,
-                                      1.6e5),
-                      eric_income = c(1.25e5,
-                                      1.3e5,
-                                      1.35e5,
-                                      1.4e5,
-                                      1.45e5,
-                                      1.6e5,
-                                      1.6e5,
                                       1.6e5,
                                       1.6e5,
                                       1.6e5),
-                      f01k_contribution = rep(36000, 10),
-                      f01k_match_pct = rep(0.03, 10),
-                      ira_contribution = rep(11000, 10),
-                      savings_rate = rep(0.5, 10))
+                      eric_income = c(0.6e5,
+                                      0.62e5,
+                                      0.64e5,
+                                      0.8e5,
+                                      2.4e5,
+                                      2.6e5,
+                                      2.8e5,
+                                      3e5,
+                                      3e5,
+                                      3e5,
+                                      3e5,
+                                      3e5),
+                      f01k_contribution = rep(36000, 12),
+                      f01k_match_pct = rep(0.03, 12),
+                      ira_contribution = rep(11000, 12),
+                      savings_rate = c(rep(0.4, 4), rep(0.5, 8)))
       
       values[["DF"]] = df
       
@@ -165,6 +204,8 @@ editTable <- function(DF, outdir=getwd(), outfilename="table"){
                                       1.6e5,
                                       1.6e5,
                                       1.6e5,
+                                      1.6e5,
+                                      1.6e5,
                                       1.6e5),
                       eric_income = c(0.6e5,
                                       0.62e5,
@@ -175,11 +216,13 @@ editTable <- function(DF, outdir=getwd(), outfilename="table"){
                                       2.8e5,
                                       3e5,
                                       3e5,
+                                      3e5,
+                                      3e5,
                                       3e5),
-                      f01k_contribution = rep(36000, 10),
-                      f01k_match_pct = rep(0.03, 10),
-                      ira_contribution = rep(11000, 10),
-                      savings_rate = c(rep(0.4, 4), rep(0.7, 6)))
+                      f01k_contribution = rep(36000, 12),
+                      f01k_match_pct = rep(0.03, 12),
+                      ira_contribution = rep(11000, 12),
+                      savings_rate = c(rep(0.4, 4), rep(0.5, 8)))
       
       values[["DF"]] = df
       
