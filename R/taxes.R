@@ -1,5 +1,13 @@
 taxes = function(df, standard_deduction = T, other_deductions = 0){
   
+  if(!('f01k_contribution' %in% colnames(df))){
+    df = df %>% mutate(f01k_contribution = 36000)
+  }
+  
+  if(!('ira_contribution' %in% colnames(df))){
+    df = df %>% mutate(ira_contribution = 11000)
+  }
+  
   deductions = if(standard_deduction) 12000 + other_deductions else
     other_deductions
   
@@ -18,7 +26,22 @@ taxes = function(df, standard_deduction = T, other_deductions = 0){
   taxes
 }
 
-contributions = function(income_after_taxes){
+contributions = function(income_after_taxes, fc = NULL, sr = NULL){
+  
+  if(!is.null(fc)){
+    income_after_taxes = income_after_taxes %>%
+      mutate(f01k_match_pct = fc)
+  } else if(is.null(fc) && 
+            !("f01k_match_pct" %in% colnames(income_after_taxes))){
+    income_after_taxes = income_after_taxes %>%
+      mutate(f01k_match_pct = 0)
+  }
+  
+  if(!is.null(sr)){
+    income_after_taxes = income_after_taxes %>%
+      mutate(savings_rate = sr)
+  }
+  
   income_after_taxes %>%
     mutate(saving_goal = income * savings_rate) %>%
     mutate(f01k_match = min(income*f01k_match_pct, f01k_contribution)) %>%
