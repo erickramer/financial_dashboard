@@ -34,9 +34,18 @@ summary = tabItem(tabName = "summary",
                     valueBoxOutput("annual_withdrawal")
                   ))
 
+charts = tabItem(tabName = "charts",
+                 fluidRow(
+                   box(vegaliteOutput("plt_income", height = 300), 
+                       title = "Income", width = 6),
+                   box(vegaliteOutput("plt_contributions", height = 300), 
+                       title = "Contributions", width = 6)
+                 ))
+
 body = dashboardBody(
   summary,
   parameters,
+  charts,
   taxes,
   contributions
 )

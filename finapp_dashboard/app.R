@@ -13,6 +13,8 @@ library(rhandsontable)
 library(tidyverse)
 library(Rcpp)
 library(logging)
+library(rCharts)
+library(vegalite)
 
 basicConfig()
 
@@ -40,9 +42,10 @@ server <- function(input, output) {
   
   # reactive tables
   
+  tbl_income = reactiveVal()
   tbl_income_valid = reactiveVal()
    
-  tbl_income = reactive({
+  observe({
     if(!is.null(input$tbl_income)){
       df = hot_to_r(input$tbl_income)
       
@@ -50,10 +53,10 @@ server <- function(input, output) {
         if(all(!is.na(df$page_income)))
           tbl_income_valid(df %>% mutate(year = row_number()))
       
-      df
+      tbl_income(df)
     } else{
       tbl_income_valid(tbl_income_default)
-      tbl_income_default
+      tbl_income(tbl_income_default)
     }
   })
   
@@ -79,7 +82,7 @@ server <- function(input, output) {
   })
   
   observeEvent(input$ds10,{
-    
+    tbl_income(ds10)
   })
   
   observeEvent(input$ds12,{
@@ -94,6 +97,9 @@ server <- function(input, output) {
     tbl_income(doc12)
   })
   
+  observeEvent(input$age_disc,{
+    tbl_income(age_disc)
+  })
   
   output$tbl_income = renderRHandsontable({
     df = tbl_income()
@@ -132,6 +138,43 @@ server <- function(input, output) {
     amount = scales::dollar(0.04 * principal)
     valueBox(amount, "Annual Withdrawl") 
   })
+  
+  output$plt_income = renderVegalite({
+    df = tbl_contributions() %>%
+      select(year, contains("income")) %>%
+      gather(type, income, -year)
+    
+    vegalite() %>%
+      add_data(df) %>%
+      cell_size(400, 200) %>%
+      encode_x("year", "ordinal") %>%
+      encode_y("income", "quantitative") %>%
+      encode_color("type", "nominal") %>%
+      scale_x_linear(zero = F) %>%
+      axis_x(title = "Year") %>%
+      axis_y(title = "Amount (USD)") %>%
+      mark_line()
+  })
+  
+  output$plt_contributions = renderVegalite({
+    df = tbl_contributions() %>%
+      select(year, f01k_total_contribution, 
+             ira_contribution, taxable_contribution) %>%
+      gather(type, contribution, -year)
+    
+    vegalite() %>%
+      add_data(df) %>%
+      cell_size(400, 200) %>%
+      encode_x("year", "ordinal") %>%
+      encode_y("contribution", "quantitative") %>%
+      encode_color("type", "nominal") %>%
+      scale_x_linear(zero = F) %>%
+      axis_x(title = "Year") %>%
+      axis_y(title = "Amount (USD)") %>%
+      mark_line()
+  })
+  
+  
 }
 
 tbl_income_default = ds10
