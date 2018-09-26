@@ -1,14 +1,14 @@
 
-ds10_income = c(1.3e5,
-                1.35e5,
-                1.4e5,
-                1.45e5,
-                1.5e5,
-                1.6e5,
-                1.6e5,
-                1.6e5,
-                1.6e5,
-                1.6e5) %>% as.integer()
+ds10_income = c(1.6e5,
+                1.65e5,
+                1.7e5,
+                1.75e5,
+                1.8e5,
+                1.85e5,
+                1.9e5,
+                1.95e5,
+                2e5,
+                2e5) %>% as.integer()
 
 ds12_income = c(ds10_income, 1.6e5, 1.6e5) %>% as.integer()
 

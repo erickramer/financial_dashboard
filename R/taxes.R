@@ -60,7 +60,9 @@ contributions = function(income_after_taxes, fc = NULL, sr = NULL){
            f01k_total_contribution, 
            ira_contribution,
            taxable_contribution,
-           net_income_after_contributions)
+           net_income_after_contributions) %>%
+    mutate(net_monthly_income = net_income_after_contributions / 12,
+           max_monthly_rent = net_monthly_income / 3)
 }
 
 .recursive_tax = function(income, brackets, rates, tax = 0){

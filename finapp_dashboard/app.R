@@ -13,7 +13,6 @@ library(rhandsontable)
 library(tidyverse)
 library(Rcpp)
 library(logging)
-library(rCharts)
 library(vegalite)
 
 basicConfig()
