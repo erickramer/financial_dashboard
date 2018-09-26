@@ -17,12 +17,12 @@ library(vegalite)
 
 basicConfig()
 
-source("sidebar.R")
-source("body.R")
-source("incomes.R")
+source("R/sidebar.R")
+source("R/body.R")
+source("R/incomes.R")
 
-source("../R/investments_via_c.R")
-source("../R/taxes.R")
+source("R/investments_via_c.R")
+source("R/taxes.R")
 
 sourceCpp("../src/investments.cpp")
 
