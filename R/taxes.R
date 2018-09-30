@@ -1,68 +1,28 @@
-taxes = function(df, standard_deduction = T, other_deductions = 0){
+calc_taxes = function(pretax_contributions, 
+                 standard_deduction = T, 
+                 other_deductions = 0){
   
-  if(!('f01k_contribution' %in% colnames(df))){
-    df = df %>% mutate(f01k_contribution = 36000)
-  }
-  
-  if(!('ira_contribution' %in% colnames(df))){
-    df = df %>% mutate(ira_contribution = 11000)
-  }
-  
+  loginfo("Calculating taxes")
+
   deductions = if(standard_deduction) 12000 + other_deductions else
     other_deductions
   
-  taxes = df %>%
-    mutate(income = income1 + income2) %>%
-    mutate(taxable_income = income - f01k_contribution - ira_contribution -
-             deductions) %>%
-    mutate(federal_tax = map_dbl(taxable_income, federal_taxes)) %>%
-    mutate(state_tax = map_dbl(taxable_income, state_taxes)) %>%
-    mutate(ss_tax = map_dbl(taxable_income, ss_taxes)) %>%
-    mutate(medicare_tax = map_dbl(taxable_income, medicare_taxes)) %>%
-    mutate(total_tax = federal_tax + state_tax + ss_tax + medicare_tax) %>%
-    mutate(net_income = income - total_tax) %>%
-    mutate(effective_tax_rate = 1 - net_income / income)
+  taxes = pretax_contributions %>%
+    mutate(income_taxable = income - contribution_401k - 
+             contribution_ira - deductions) %>%
+    mutate(tax_federal = map_dbl(income_taxable, federal_taxes)) %>%
+    mutate(tax_state = map_dbl(income_taxable, state_taxes)) %>%
+    mutate(tax_ss = map_dbl(income_taxable, ss_taxes)) %>%
+    mutate(tax_medicare = map_dbl(income_taxable, medicare_taxes)) %>%
+    mutate(tax_total = tax_federal + tax_state + tax_ss + tax_medicare) %>%
+    mutate(income_after_taxes = income - tax_total) %>%
+    mutate(tax_effective_rate = tax_total / income) %>%
+    select(year,
+           starts_with("income"), 
+           starts_with("contribution"), 
+           starts_with("tax"))
   
   taxes
-}
-
-contributions = function(income_after_taxes, fc = NULL, sr = NULL){
-  
-  if(!is.null(fc)){
-    income_after_taxes = income_after_taxes %>%
-      mutate(f01k_match_pct = fc)
-  } else if(is.null(fc) && 
-            !("f01k_match_pct" %in% colnames(income_after_taxes))){
-    income_after_taxes = income_after_taxes %>%
-      mutate(f01k_match_pct = 0)
-  }
-  
-  if(!is.null(sr)){
-    income_after_taxes = income_after_taxes %>%
-      mutate(savings_rate = sr)
-  }
-  
-  income_after_taxes %>%
-    mutate(saving_goal = income * savings_rate) %>%
-    mutate(f01k_match = min(income*f01k_match_pct, f01k_contribution)) %>%
-    mutate(f01k_total_contribution = f01k_match + f01k_contribution) %>%
-    mutate(taxable_contribution = saving_goal - f01k_contribution - 
-             f01k_match - ira_contribution) %>%
-    mutate(net_income_after_contributions = net_income - 
-             f01k_contribution - 
-             ira_contribution - 
-             taxable_contribution) %>%
-    select(year,
-           income, 
-           total_tax,
-           net_income, 
-           f01k_contribution, 
-           f01k_total_contribution, 
-           ira_contribution,
-           taxable_contribution,
-           net_income_after_contributions) %>%
-    mutate(net_monthly_income = net_income_after_contributions / 12,
-           max_monthly_rent = net_monthly_income / 3)
 }
 
 .recursive_tax = function(income, brackets, rates, tax = 0){

@@ -1,76 +1,41 @@
-con = ds10 %>%
-  taxes() %>%
-  contributions(fc = 0, sr = 0.5) %>%
-  mutate(date = as.character(year + 2019))
-
-con2 = con %>% 
-  select(year, contains("income")) %>%
-  gather(type, income, -year)
+portfolio_figure = function(simulations){
+  stats = simulations %>%
+    group_by(month) %>%
+    summarize(median = median(total_value),
+              max = quantile(total_value, probs = 0.95),
+              min = quantile(total_value, probs = 0.05)) %>%
+    mutate(year = month / 12) %>%
+    select(-month) 
   
-income_graph = nPlot(income ~ year,
-                     group = "type",
-                     data = con2, 
-                     type = "lineChart",
-                     axisLabel)
-income_graph
+  polydata = data.frame(year = c(stats$year, rev(stats$year)),
+                        value = c(stats$max, rev(stats$min)))
+  
+  ggplot() +
+    geom_polygon(aes(year, value), data = polydata, fill = "grey") +
+    geom_line(aes(year, median), lwd = 1, data = stats) +
+    xlab("Year") +
+    ylab("Portfolio Value") +
+    scale_y_continuous(labels = scales::dollar)
+}
 
+portfolio_figure_holding = function(extremes, medians){
+  ggplot() +
+    geom_polygon(aes(year, value), fill = "grey", data = extremes) +
+    geom_line(aes(year, value, col=holding), lwd=1, data = medians) +
+    facet_grid(cols = vars(instrument)) +
+    scale_y_continuous(labels = scales::dollar) +
+    xlab("Year") +
+    ylab("Value") +
+    scale_colour_brewer(palette = "Dark2")
+}
 
-income_graph2 = mPlot(x = "date", 
-                      y = c("income", "net_income"), 
-                      data = con, 
-                      type = "Line",
-                      ymin = 0,
-                      hideHover = F,
-                      preUnits = "$")
-income_graph2
-
-
-library(vegalite)
-
-dat <- jsonlite::fromJSON('[
-      {"a": "A","b": 28}, {"a": "B","b": 55}, {"a": "C","b": 43},
-                          {"a": "D","b": 91}, {"a": "E","b": 81}, {"a": "F","b": 53},
-                          {"a": "G","b": 19}, {"a": "H","b": 87}, {"a": "I","b": 52}
-                          ]')
-
-vegalite() %>%
-  cell_size(400, 200) %>%
-  add_data(con2) %>%
-  encode_x("year", "ordinal") %>%
-  encode_y("income", "quantitative") %>%
-  encode_color("type", "nominal") %>%
-  scale_x_linear(zero = F) %>%
-  axis_x(title = "Year") %>%
-  axis_y(title = "Income") %>%
-  mark_line()
-
-sims = simulate_investments(con$f01k_total_contribution,
-                            con$ira_contribution,
-                            con$taxable_contribution,
-                            0, 0, 0, 0.8, 100)
-
-top = function(x) quantile(x, probs = 0.9)
-bottom = function(x) quantile(x, probs = 0.1)
-
-quantiles = sims %>%
-  group_by(month) %>%
-  summarize_at(vars(contains("stock"), contains("bond"), total_value),
-              funs(median, top, bottom)) %>%
-  ungroup() %>%
-  select(month, contains("top"), contains("bottom"), contains("median")) %>%
-  gather(var, value, -month) %>%
-  separate(var, into = c("instrument", "bucket", "bracket"), sep = "_")
-
-vegalite() %>%
-  cell_size(400, 400) %>%
-
-vegalite() %>%
-  cell_size(400, 400) %>%
-  add_data(quantiles %>% filter(bucket == "total")) %>%
-  encode_x("month", "quantitative") %>%
-  encode_y("total_value", "quantitative") %>%
-  encode_detail("sim", "nominal") %>%
-  encode_color("bracket") %>%
-  axis_x(title = "Year") %>%
-  axis_y(title = "Value (USD)") %>%
-  mark_line()
+portfolio_figure_instrument = function(extremes, medians){
+  ggplot() +
+    geom_polygon(aes(year, value), fill = "grey", data = extremes) +
+    geom_line(aes(year, value, col=instrument), lwd=1, data = medians) +
+    facet_grid(cols = vars(holding)) +
+    scale_y_continuous(labels = scales::dollar) +
+    xlab("Year") +
+    ylab("Value") +
+    scale_colour_brewer(palette = "Dark2")
+}
