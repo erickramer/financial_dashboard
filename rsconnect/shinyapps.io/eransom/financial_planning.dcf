@@ -1,0 +1,12 @@
+name: financial_planning
+title: financial_planning
+username:
+account: eransom
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 479998
+bundleId: 1614902
+url: https://eransom.shinyapps.io/financial_planning/
+when: 1538356285.56452
+asMultiple: FALSE
+asStatic: FALSE

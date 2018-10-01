@@ -8,7 +8,7 @@ Live: [https://eransom.shinyapps.io/financial_planning/](https://eransom.shinyap
 
 Financial Independent (FI) is when your income from investment equals your spending. It gives you the opportunity to pursue the interests and goals that really matter without having to worry about finances.
 
-For a primer, check our [Mr. Money Mustache's blog](https://www.mrmoneymustache.com/)
+For a primer, check out [Mr. Money Mustache's blog](https://www.mrmoneymustache.com/)
 
 # Why this app?
 
