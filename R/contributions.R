@@ -17,7 +17,7 @@ calc_pretax_contributions = function(df,
     mutate(contribution_401k_employee = pmin(income_remaining, 
                                    savings_remaining, 
                                    MAX_401K)) %>%
-    mutate(contribution_401k_employer = contribution_401k_employee * match_401k) %>%
+    mutate(contribution_401k_employer = min(income * match_401k, contribution_401k_employee)) %>%
     mutate(contribution_401k = contribution_401k_employer + 
              contribution_401k_employee) %>%
     mutate(income_remaining = income_remaining - contribution_401k_employee,

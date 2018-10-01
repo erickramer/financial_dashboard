@@ -1,9 +1,10 @@
 parameters = tabItem(tabName = "parameters",
                      fluidRow(
                        column(6,
-                         box(rHandsontableOutput("tbl_income"), 
-                             title = "Enter Expected Income Here",
-                             width = 12)),
+                              box(column(6, rHandsontableOutput("tbl_income")),
+                                  column(6, rHandsontableOutput("tbl_takehome_income")),
+                                  title = "Expected Pre-tax Income",
+                                  width = 12)),
                        column(6,
                               box(sliderInput("savings_rate", "Savings Rate", min = 0, max = 1,
                                               value = 0.4), 
@@ -30,7 +31,7 @@ contributions = tabItem(tabName = "income",
                   fluidRow(
                     box(rHandsontableOutput("tbl_contributions"), 
                         title = "Contributions",
-                        width = 12)))
+                        width = 8)))
 
 summary = tabItem(tabName = "summary",
                   fluidRow(

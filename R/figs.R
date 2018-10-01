@@ -15,7 +15,9 @@ portfolio_figure = function(simulations){
     geom_line(aes(year, median), lwd = 1, data = stats) +
     xlab("Year") +
     ylab("Portfolio Value") +
-    scale_y_continuous(labels = scales::dollar)
+    scale_y_continuous(labels = scales::dollar) +
+    theme(text = element_text(size = 20)) +
+    expand_limits(x = 0, y = 0)
 }
 
 portfolio_figure_holding = function(extremes, medians){
@@ -26,7 +28,10 @@ portfolio_figure_holding = function(extremes, medians){
     scale_y_continuous(labels = scales::dollar) +
     xlab("Year") +
     ylab("Value") +
-    scale_colour_brewer(palette = "Dark2")
+    scale_colour_brewer(palette = "Dark2") +
+    theme(text = element_text(size = 20)) +
+    guides(col=guide_legend(title="Account")) +
+    expand_limits(x = 0, y = 0)
 }
 
 portfolio_figure_instrument = function(extremes, medians){
@@ -37,5 +42,8 @@ portfolio_figure_instrument = function(extremes, medians){
     scale_y_continuous(labels = scales::dollar) +
     xlab("Year") +
     ylab("Value") +
-    scale_colour_brewer(palette = "Dark2")
+    scale_colour_brewer(palette = "Dark2") +
+    theme(text = element_text(size = 20)) +
+    guides(col=guide_legend(title="Asset Class")) +
+    expand_limits(x = 0, y = 0)
 }

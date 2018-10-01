@@ -64,7 +64,7 @@ server <- function(input, output) {
   
   tbl_all = reactive({
     tbl_income_valid() %>%
-      calc_pretax_contributions(input$savings_rate) %>%
+      calc_pretax_contributions(input$savings_rate, match_401k = input$fk_pct) %>%
       calc_taxes() %>%
       calc_posttax_contributions(input$savings_rate)
   })
@@ -147,6 +147,11 @@ server <- function(input, output) {
     rhandsontable(df, readOnly = T)
   })
   
+  output$tbl_takehome_income = renderRHandsontable({
+    df = tbl_all() %>%
+      select(Year = year, `Take Home Income` = income_take_home) 
+    rhandsontable(df, readOnly = T)
+  })
 
   output$mean_portfolio = renderValueBox({
     df = tbl_simulations() %>% 
@@ -175,7 +180,7 @@ server <- function(input, output) {
       filter(month == max(month))
     principal = median(df$total_value)
     amount = scales::dollar(0.04 * principal)
-    valueBox(amount, "Yearly Income from Final Portfolio") 
+    valueBox(amount, "Retirement Take Home Income") 
   })
   
   output$pct_fired = renderValueBox({
